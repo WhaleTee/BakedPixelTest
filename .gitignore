@@ -33,7 +33,9 @@
 
 # Visual Studio cache directory
 .vs/
-
+# JB cache directory
+.idea/
+/[Aa]ssets/[Ss]cripts/.idea/
 # Gradle cache directory
 .gradle/
 
