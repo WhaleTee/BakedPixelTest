@@ -7,6 +7,7 @@ using System.IO.Compression;
 public class InventorySaveData
 {
     public int coins;
+    public int totalSlots;
     public List<SlotSaveData> slots = new();
     
     public byte[] Compress()
@@ -38,6 +39,7 @@ public class InventorySaveData
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms);
         writer.Write(coins);
+        writer.Write(totalSlots);
         writer.Write(slots.Count);
             
         foreach (var slot in slots)
@@ -55,6 +57,7 @@ public class InventorySaveData
         var saveData = new InventorySaveData
         {
             coins = reader.ReadInt32(),
+            totalSlots = reader.ReadInt32(),
             slots = new List<SlotSaveData>()
         };
             

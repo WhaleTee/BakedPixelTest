@@ -15,20 +15,22 @@ public class InventorySlotUI : MonoBehaviour
 
     public int SlotIndex { get; private set; }
 
+    private void Awake()
+    {
+        @lock = GetComponentInChildren<Lock>();
+    }
+
     public void Initialize(int index)
     {
         SlotIndex = index;
         name = $"Slot {SlotIndex}";
-        @lock = GetComponentInChildren<Lock>();
         UpdateSlot();
     }
 
     public void UpdateSlot()
     {
         var slot = InventorySystem.Instance.GetSlot(SlotIndex);
-        transform.SetSiblingIndex(SlotIndex);
-        name = $"Slot {SlotIndex}";
-        LayoutRebuilder.ForceRebuildLayoutImmediate(transform.parent.GetComponent<RectTransform>());
+        
         @lock.gameObject.SetActive(slot.IsLocked);
         if (slot.IsLocked)
         {

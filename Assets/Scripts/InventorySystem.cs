@@ -8,33 +8,46 @@ public class InventorySystem : PersistentSingleton<InventorySystem>
 {
     public event Action OnInventoryChanged;
     public event Action OnCoinsChanged;
+    public event Action<int, int> OnSlotSwapped;
+
     [field: SerializeField] public int TotalSlots { get; private set; } = 30;
     [field: SerializeField] public int UnlockSlotsCost { get; private set; } = 75;
     [field: SerializeField] public int UnlockSlotsAtStart { get; private set; } = 15;
     [field: SerializeField] public int Coins { get; private set; } = 1125;
 
-    [Space]
-    [Header("ItemDatabase")]
-    [SerializeField] private ItemDatabase itemDatabase;
-    
+    [Space] [Header("ItemDatabase")] [SerializeField]
+    private ItemDatabase itemDatabase;
+
     public float TotalWeight { get; private set; }
 
     private InventorySlot[] slots;
     private int UnlockedSlots { get; set; }
 
-    private void Start()
+    private void OnEnable()
     {
-        slots = new InventorySlot[TotalSlots];
-        for (var i = 0; i < TotalSlots; i++)
-        {
-            slots[i] = new InventorySlot { IsLocked = true };
-            if (UnlockedSlots < UnlockSlotsAtStart) UnlockSlot(slots[i]);
-        }
-
         OnInventoryChanged += CalculateWeight;
-        ApplySaveData(MobileSaveSystem.LoadInventory());
     }
 
+    private void Start()
+    {
+        ApplySaveData(MobileSaveSystem.LoadInventory());
+
+        if (slots == null)
+        {
+            slots = new InventorySlot[TotalSlots];
+            InitSlots();
+            for (var i = 0; i < TotalSlots; i++)
+            {
+                if (UnlockedSlots < UnlockSlotsAtStart) UnlockSlot(slots[i]);
+            }
+        }
+    }
+
+    private void InitSlots()
+    {
+        for (var i = 0; i < TotalSlots; i++) slots[i] = new InventorySlot();
+    }
+    
     private void OnDestroy()
     {
         SaveInventory();
@@ -44,7 +57,8 @@ public class InventorySystem : PersistentSingleton<InventorySystem>
     {
         var saveData = new InventorySaveData
         {
-            coins = Coins
+            coins = Coins,
+            totalSlots = TotalSlots
         };
 
         for (var i = 0; i < TotalSlots; i++)
@@ -66,17 +80,21 @@ public class InventorySystem : PersistentSingleton<InventorySystem>
 
         MobileSaveSystem.SaveInventory(saveData);
     }
-    
+
     private void ApplySaveData(InventorySaveData saveData)
     {
         if (saveData == null) return;
         Coins = saveData.coins;
+        TotalSlots = saveData.totalSlots;
         UnlockedSlots = saveData.slots.Count(slot => !slot.isLocked);
+
+        slots = new InventorySlot[TotalSlots];
+        InitSlots();
 
         for (var i = 0; i < TotalSlots && i < saveData.slots.Count; i++)
         {
             slots[i].IsLocked = saveData.slots[i].isLocked;
-            
+
             if (saveData.slots[i].itemID != null)
             {
                 // Загружаем данные из ScriptableObject
@@ -88,7 +106,7 @@ public class InventorySystem : PersistentSingleton<InventorySystem>
                 slots[i].Clear();
             }
         }
-        
+
         OnInventoryChanged?.Invoke();
         OnCoinsChanged?.Invoke();
     }
@@ -99,6 +117,7 @@ public class InventorySystem : PersistentSingleton<InventorySystem>
         if (i1 >= TotalSlots || i1 < 0) return;
         if (i2 >= TotalSlots || i2 < 0) return;
         (slots[i1], slots[i2]) = (slots[i2], slots[i1]);
+        OnSlotSwapped?.Invoke(i1, i2);
         OnInventoryChanged?.Invoke();
     }
 
@@ -221,7 +240,7 @@ public class InventorySystem : PersistentSingleton<InventorySystem>
         TotalWeight = 0;
         foreach (var slot in slots)
         {
-            if (!slot.IsEmpty && !slot.IsLocked)
+            if (slot is { IsEmpty: false, IsLocked: false })
                 TotalWeight += slot.Item.Weight * slot.Count;
         }
     }

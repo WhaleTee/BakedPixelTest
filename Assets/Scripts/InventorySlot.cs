@@ -3,7 +3,7 @@
     public Item Item { get; private set; }
     public int Count { get; private set; }
     public bool IsEmpty => Item == null;
-    public bool IsLocked { get; set; }
+    public bool IsLocked { get; set; } = true;
     public void Clear()
     {
         Item = null;

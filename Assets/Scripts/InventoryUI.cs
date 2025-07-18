@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InventoryUI : MonoBehaviour
 {
@@ -29,7 +31,21 @@ public class InventoryUI : MonoBehaviour
             slotUI.OnShowSlotInfoPopup += ShowPopup;
         }
         InventorySystem.Instance.OnInventoryChanged += UpdateUI;
+        InventorySystem.Instance.OnSlotSwapped += SwapSlots;
+    }
+
+    private void OnEnable()
+    {
         InventorySystem.Instance.OnCoinsChanged += UpdateCoins;
+        InventorySystem.Instance.OnInventoryChanged += UpdateWeightUI;
+    }
+
+    private void OnDestroy()
+    {
+        InventorySystem.Instance.OnInventoryChanged -= UpdateUI;
+        InventorySystem.Instance.OnInventoryChanged -= UpdateWeightUI;
+        InventorySystem.Instance.OnCoinsChanged -= UpdateCoins;
+        InventorySystem.Instance.OnSlotSwapped -= SwapSlots;
     }
 
     private void ShowPopup(int slotIndex)
@@ -64,12 +80,25 @@ public class InventoryUI : MonoBehaviour
         {
             slotUIs[i].UpdateSlot();
         }
+    }
 
+    private void UpdateWeightUI()
+    {
         weightText.text = $"Вес инвентаря: {InventorySystem.Instance.TotalWeight:F2}кг";
     }
 
     private void UpdateCoins()
     {
         coinsText.text = $"Монеты: {InventorySystem.Instance.Coins}";
+    }
+
+    private void SwapSlots(int i1, int i2)
+    {
+        slotUIs[i1].transform.SetSiblingIndex(i2);
+        slotUIs[i1].Initialize(i2);
+        slotUIs[i2].transform.SetSiblingIndex(i1);
+        slotUIs[i2].Initialize(i1);
+        (slotUIs[i1], slotUIs[i2]) = (slotUIs[i2], slotUIs[i1]);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(slotUIs[i1].transform.parent.GetComponent<RectTransform>());
     }
 }
