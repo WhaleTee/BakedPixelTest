@@ -10,22 +10,25 @@ public class InventorySlotUI : MonoBehaviour
     [SerializeField] private TMP_Text countText;
     
     public event Action<int> OnShowSlotInfoPopup;
-    
-    public Lock @lock { get; private set; }
 
-    private int slotIndex;
+    private Lock @lock;
+
+    public int SlotIndex { get; private set; }
 
     public void Initialize(int index)
     {
-        slotIndex = index;
+        SlotIndex = index;
+        name = $"Slot {SlotIndex}";
         @lock = GetComponentInChildren<Lock>();
         UpdateSlot();
     }
 
     public void UpdateSlot()
     {
-        var slot = InventorySystem.Instance.GetSlot(slotIndex);
-
+        var slot = InventorySystem.Instance.GetSlot(SlotIndex);
+        transform.SetSiblingIndex(SlotIndex);
+        name = $"Slot {SlotIndex}";
+        LayoutRebuilder.ForceRebuildLayoutImmediate(transform.parent.GetComponent<RectTransform>());
         @lock.gameObject.SetActive(slot.IsLocked);
         if (slot.IsLocked)
         {
@@ -51,10 +54,10 @@ public class InventorySlotUI : MonoBehaviour
 
     public void OnShowPopupButton()
     {
-        var slot = InventorySystem.Instance.GetSlot(slotIndex);
+        var slot = InventorySystem.Instance.GetSlot(SlotIndex);
         
-        if (!slot.IsEmpty && !slot.IsLocked) OnShowSlotInfoPopup?.Invoke(slotIndex);
+        if (!slot.IsEmpty && !slot.IsLocked) OnShowSlotInfoPopup?.Invoke(SlotIndex);
     }
 
-    public void Unlock() => InventorySystem.Instance.UnlockSlot(slotIndex);
+    public void Unlock() => InventorySystem.Instance.UnlockSlot(SlotIndex);
 }

@@ -54,7 +54,8 @@ public class DragDropSystem : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         canvasGroup.interactable = true;
         if (swappedSlot != null)
         {
-            transform.position = swappedSlotOriginalPosition;
+            // transform.position = swappedSlotOriginalPosition;
+            InventorySystem.Instance.SwapSlots(GetComponent<InventorySlotUI>().SlotIndex, swappedSlot.SlotIndex);
             swappedSlot = null;
         } else transform.position = dragStartPosition;
     }

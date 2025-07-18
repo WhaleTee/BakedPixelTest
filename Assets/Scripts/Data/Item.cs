@@ -9,7 +9,6 @@ public enum ArmorType { Torso, Head }
 
 public abstract class Item
 {
-    public string ID { get; } = Guid.NewGuid().ToString();
     public string Name { get; protected set; }
     public float Weight { get; protected set; }
     public Sprite Icon { get; protected set; }

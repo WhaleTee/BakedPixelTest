@@ -13,6 +13,10 @@ public class InventorySystem : PersistentSingleton<InventorySystem>
     [field: SerializeField] public int UnlockSlotsAtStart { get; private set; } = 15;
     [field: SerializeField] public int Coins { get; private set; } = 1125;
 
+    [Space]
+    [Header("ItemDatabase")]
+    [SerializeField] private ItemDatabase itemDatabase;
+    
     public float TotalWeight { get; private set; }
 
     private InventorySlot[] slots;
@@ -28,6 +32,74 @@ public class InventorySystem : PersistentSingleton<InventorySystem>
         }
 
         OnInventoryChanged += CalculateWeight;
+        ApplySaveData(MobileSaveSystem.LoadInventory());
+    }
+
+    private void OnDestroy()
+    {
+        SaveInventory();
+    }
+
+    private void SaveInventory()
+    {
+        var saveData = new InventorySaveData
+        {
+            coins = Coins
+        };
+
+        for (var i = 0; i < TotalSlots; i++)
+        {
+            var slotData = new SlotSaveData
+            {
+                isLocked = slots[i].IsLocked,
+                count = slots[i].Count
+            };
+
+            if (!slots[i].IsEmpty)
+            {
+                slotData.itemID = itemDatabase.GetItemID(slots[i].Item);
+                slotData.count = slots[i].Count;
+            }
+
+            saveData.slots.Add(slotData);
+        }
+
+        MobileSaveSystem.SaveInventory(saveData);
+    }
+    
+    private void ApplySaveData(InventorySaveData saveData)
+    {
+        if (saveData == null) return;
+        Coins = saveData.coins;
+        UnlockedSlots = saveData.slots.Count(slot => !slot.isLocked);
+
+        for (var i = 0; i < TotalSlots && i < saveData.slots.Count; i++)
+        {
+            slots[i].IsLocked = saveData.slots[i].isLocked;
+            
+            if (saveData.slots[i].itemID != null)
+            {
+                // Загружаем данные из ScriptableObject
+                var item = itemDatabase.GetItem(saveData.slots[i].itemID);
+                slots[i].SetItem(item, saveData.slots[i].count);
+            }
+            else
+            {
+                slots[i].Clear();
+            }
+        }
+        
+        OnInventoryChanged?.Invoke();
+        OnCoinsChanged?.Invoke();
+    }
+
+    public void SwapSlots(int i1, int i2)
+    {
+        if (i1 == i2) return;
+        if (i1 >= TotalSlots || i1 < 0) return;
+        if (i2 >= TotalSlots || i2 < 0) return;
+        (slots[i1], slots[i2]) = (slots[i2], slots[i1]);
+        OnInventoryChanged?.Invoke();
     }
 
     public void AddItem(Item item, int amount = 1)

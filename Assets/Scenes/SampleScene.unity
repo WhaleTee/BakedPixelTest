@@ -953,6 +953,7 @@ MonoBehaviour:
   <UnlockSlotsCost>k__BackingField: 75
   <UnlockSlotsAtStart>k__BackingField: 15
   <Coins>k__BackingField: 1125
+  itemDatabase: {fileID: 11400000, guid: 936135a91816ac6418a07826bede1272, type: 2}
 --- !u!4 &361223139
 Transform:
   m_ObjectHideFlags: 0
